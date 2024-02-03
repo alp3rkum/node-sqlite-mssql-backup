@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Database Backup API Demo</title>
+    </head>
+    <body>
+        <h1>Database Backup Demo</h1>
+        <p>This page is the index endpoint of the backend API. Thanks to the power of fs module of JavaScript/TypeScript, it is possible to have a more visually and functionally sophisticated backend API.</p>
+        <button onclick="window.location.href='/helo'">Say Hello!</button>
+        <button onclick="window.location.href='/sqlite'">View SQLite Database</button>
+        <button onclick="window.location.href='/mssql'">View MSSQL Database</button>
+        <form method="POST">
+            <button formaction="/transfer">Transfer to MSSQL</button>
+        </form>
+    </body>
+</html>
