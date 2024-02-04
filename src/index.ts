@@ -6,7 +6,7 @@ import fs from 'fs';
 const app = express();
 const port = 8081;
 
-interface SQLiteRow { //necessary interface to get records from the database
+interface MSSQLRow { //necessary interface to get records from the database
     id: number,
     product_name: string,
     category_name: string,
@@ -18,6 +18,19 @@ const connect_to_sqlite = (): sqlite3.Database => { //the function to connect to
     const db = new sqlite3.Database('./src/db/sqlite/database.db',sqlite3.OPEN_READWRITE, (err) => {
         if (err) {
             console.error(err.message);
+            console.log("But we can fix that :)");
+            const newDb = new sqlite3.Database('./src/db/sqlite/database.db',sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+                newDb.run('CREATE TABLE IF NOT EXISTS database (id INTEGER PRIMARY KEY, product_name TEXT, category_name TEXT, price REAL, quantity INTEGER)', (err) => {
+                    if (err) {
+                        console.error(err.message);
+                    }
+                    else
+                    {
+                        console.log('SQLite database created.');
+                    }
+                });
+            })
+            connect_to_sqlite();
         }
         else
         {
@@ -118,26 +131,38 @@ app.get('/mssql/id=:id', (req: Request, res: Response) => {
     })
 })
 
-app.post('/transfer', async (req: Request, res: Response) => { //performs the transfer from backup database to main database
+app.post('/transfer', async (req: Request, res: Response) => { //performs the transfer from main database to backup database
     let didTransfer:boolean = false;
     try
     {
         const sqlite_db = connect_to_sqlite();
-        const sqlite_data: SQLiteRow[] = await new Promise((resolve, reject) => {
-            sqlite_db.all(sqlite_queries[0], (err, rows) => {
+        const mssql_data: MSSQLRow[] = await new Promise((resolve, reject) => {
+            msnodesqlv8.query(mssql_connectionString, mssql_queries[0], (err, rows) => {
                 if (err) {
                     reject(err);
                 }
                 else
                 {
-                    resolve(rows as SQLiteRow[]);
+                    resolve(rows as MSSQLRow[]);
                 }
             })
         })
-    
-        for (const row of sqlite_data)
+        //add the code to truncate database table
+        sqlite_db.run('DELETE FROM database', [], (err) => {
+            if (err) {
+                console.error(err);
+            } else {
+                // Reset the auto-incremented ID
+                sqlite_db.run('VACUUM', [], (err) => {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
+            }
+        });
+        for (const row of mssql_data)
         {
-            msnodesqlv8.query(mssql_connectionString, `INSERT INTO database_example (product_name, category_name, price, quantity) VALUES (?, ?, ?, ?)`, [row.product_name, row.category_name, row.price, row.quantity], (err, rows) => {
+            sqlite_db.run(`INSERT INTO database (product_name, category_name, price, quantity) VALUES (?, ?, ?, ?)`, [row.product_name, row.category_name, row.price, row.quantity], (err) => {
                 if (err) {
                     console.error(err);
                 }
@@ -154,7 +179,7 @@ app.post('/transfer', async (req: Request, res: Response) => { //performs the tr
     {
         if(didTransfer === true)
         {
-            res.send("You've successfully transferred the datas to MSSQL database");
+            res.send("You've successfully transferred the datas to SQLite database");
         }
         else
         {

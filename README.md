@@ -20,10 +20,8 @@ The backend architecture has an index page that can perform various navigations 
 
 The datas from SQLite and MSSQL databases come as a JSON array in their respective endpoints (/sqlite and /mssql). You can also get a single record according to its id (/sqlite/id={id_value} or /mssql/id={id_value}).
 
-The transfer function connects to the SQLite database, fetches the results and then adds them to the MSSQL database one by one.
+The transfer function connects to the MSSQL database, fetches the results and then adds them to the SQLite database one by one.
 
 ## How To Create The Databases
 
-For local testing, there are two files that can be used to create the example database. In src/db/sqlite folder there is a Python script, which creates the .db (SQLite) file that will hold the database. In the src/db/mssql file, there is an .sql (MS SQL) file that you can open and run in your MS SQL Server Management Studio.
-
-In the downloadable version, the SQLite database doesn't come with the project, so you can double click to the createDb.py file under src/db/sqlite folder to create the "backup" database.
+For local testing, there are two files that can be used to create the example database. In the src/db/mssql file, there is an .sql (MS SQL) file that you can open and run in your MS SQL Server Management Studio. The SQLite database will be created via "Backup To SQLite" if it doesn't exist, and if it does, it will be truncated and the existing values in the MS SQL database will be added again (some sort of mimicking the event of backing up an updated database).
